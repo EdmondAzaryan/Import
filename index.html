@@ -3,82 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Mobile App</title>
-    <!-- Официальный скрипт Telegram Mini Apps -->
+    <title>Mini App to Bot</title>
+    <!-- Подключаем официальный скрипт Telegram WebApp -->
     <script src="https://telegram.org"></script>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            padding: 20px; 
-            text-align: center; 
-            background: #1a1a1a; 
-            color: #ffffff; 
-        }
-        .box { 
-            margin-top: 40px; 
-            background: #2a2a2a; 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        h2 { margin-bottom: 5px; color: #2481cc; }
-        input { 
-            padding: 14px; 
-            width: 85%; 
-            margin: 20px 0; 
-            border-radius: 10px; 
-            border: 1px solid #444; 
-            background: #333; 
-            color: #fff; 
-            font-size: 16px; 
-        }
-        button { 
-            padding: 14px 24px; 
-            background: #2481cc; 
-            color: white; 
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            width: 92%; 
-            font-size: 16px; 
-        }
-        button:active { background: #1f71a8; }
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        button { padding: 15px 30px; font-size: 18px; color: white; background-color: #0088cc; border: none; border-radius: 8px; cursor: pointer; }
+        button:hover { background-color: #0077b5; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h2>🎪 True Grand Rp</h2>
-        <p id="user-greeting">Загрузка профиля...</p>
-        
-        <input type="text" id="msgInput" placeholder="Введите новый никнейм...">
-        <br>
-        <button onclick="sendToBot()">Сохранить изменения</button>
-    </div>
+    <button id="send-btn">Отправить данные в бот</button>
 
     <script>
-        // Инициализируем Telegram WebApp
+        // Инициализируем объект WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрываем на весь экран
+        
+        // Информируем Telegram, что приложение готово к работе
+        tg.ready();
 
-        // Показываем имя игрока, если оно доступно
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-greeting').innerText = `Игрок: ${user.first_name}`;
-        }
+        document.getElementById('send-btn').addEventListener('click', () => {
+            // Данные, которые хотим передать (лучше всего упаковать в строку JSON)
+            const dataToSend = {
+                status: "success",
+                message: "Привет из Mini App!",
+                timestamp: Date.now()
+            };
 
-        // Функция отправки данных обратно в бот
-        function sendToBot() {
-            const text = document.getElementById('msgInput').value.trim();
-            if (!text) {
-                alert("Поле не может быть пустым!");
-                return;
-            }
-            
-            // Самая важная строчка: отправляет текст боту и закрывает Mini App
-            tg.sendData(text); 
-        }
+            // Важно: метод работает только если Mini App открыт по кнопке KeyboardButton!
+            tg.sendData(JSON.stringify(dataToSend));
+        });
     </script>
 </body>
 </html>
