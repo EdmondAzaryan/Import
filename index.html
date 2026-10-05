@@ -1,39 +1,791 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini App to Bot</title>
-    <!-- Подключаем официальный скрипт Telegram WebApp -->
-    <script src="https://telegram.org"></script>
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        button { padding: 15px 30px; font-size: 18px; color: white; background-color: #0088cc; border: none; border-radius: 8px; cursor: pointer; }
-        button:hover { background-color: #0077b5; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Статистика Бота</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #1a0b2e 0%, #0d0518 50%, #000 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding-bottom: 90px;
+    overflow-x: hidden;
+}
+
+/* ─── HEADER ─── */
+.header {
+    padding: 20px 16px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.05));
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header h1 {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+.header .subtitle {
+    font-size: 11px;
+    color: #a78bfa;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+}
+
+.header .live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e;
+    animation: pulse 1.5s infinite;
+    margin-right: 6px;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* ─── CONTAINER ─── */
+.container { padding: 16px; }
+
+/* ─── КАРТОЧКИ ─── */
+.card {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(88, 28, 135, 0.08));
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #a855f7, transparent);
+}
+
+.card:active { transform: scale(0.98); }
+
+.card-title {
+    font-size: 12px;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.card-sub {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* ─── СЕТКА ─── */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.mini-card {
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    border-radius: 14px;
+    padding: 12px 10px;
+    text-align: center;
+}
+
+.mini-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.mini-label {
+    font-size: 10px;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* ─── ЦВЕТНЫЕ АКЦЕНТЫ ─── */
+.green { color: #22c55e; }
+.yellow { color: #facc15; }
+.red { color: #ef4444; }
+.purple { color: #a855f7; }
+.pink { color: #ec4899; }
+.blue { color: #3b82f6; }
+
+.card.green-accent::before { background: linear-gradient(90deg, transparent, #22c55e, transparent); }
+.card.yellow-accent::before { background: linear-gradient(90deg, transparent, #facc15, transparent); }
+.card.pink-accent::before { background: linear-gradient(90deg, transparent, #ec4899, transparent); }
+.card.blue-accent::before { background: linear-gradient(90deg, transparent, #3b82f6, transparent); }
+
+/* ─── ПРОГРЕСС-БАРЫ ─── */
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.bar-label {
+    font-size: 12px;
+    color: #d1d5db;
+    min-width: 100px;
+    flex: 1;
+}
+
+.bar-container {
+    flex: 2;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.bar-value {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* ─── ТОП СПИСОК ─── */
+.top-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.top-item:last-child { border-bottom: none; }
+
+.top-rank {
+    font-size: 14px;
+    font-weight: 900;
+    min-width: 28px;
+    text-align: center;
+}
+
+.top-rank.gold { color: #facc15; }
+.top-rank.silver { color: #e5e7eb; }
+.top-rank.bronze { color: #d97706; }
+
+.top-name {
+    flex: 1;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-value {
+    font-size: 13px;
+    font-weight: 900;
+    color: #22c55e;
+}
+
+/* ─── LIVE LIST ─── */
+.live-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+}
+
+.live-item:last-child { border-bottom: none; }
+
+.live-name {
+    flex: 1;
+    color: #fff;
+    font-weight: 600;
+}
+
+.live-cmd {
+    color: #a78bfa;
+    font-family: monospace;
+}
+
+.live-time {
+    color: #6b7280;
+    font-size: 10px;
+}
+
+/* ─── НИЖНЕЕ МЕНЮ ─── */
+.bottom-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 14px;
+    background: rgba(15, 5, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(168, 85, 247, 0.25);
+    z-index: 100;
+}
+
+.menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 9px;
+    font-weight: 600;
+    opacity: 0.5;
+    padding: 6px 16px;
+    transition: 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-btn.active { opacity: 1; }
+
+.menu-btn .menu-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+
+.menu-btn.active .menu-icon {
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.8));
+}
+
+/* ─── TABS ─── */
+.tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+    padding: 8px 14px;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a78bfa;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tab.active {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+}
+
+/* ─── ЗАГРУЗКА ─── */
+.loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a78bfa;
+    font-size: 14px;
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(168, 85, 247, 0.2);
+    border-top-color: #a855f7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── СКРЫТЫЕ ЭКРАНЫ ─── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ─── КРАСИВАЯ ПЛАШКА "ОБНОВЛЕНО" ─── */
+.updated-badge {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    background: rgba(34, 197, 94, 0.9);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: 0.3s;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.5);
+}
+
+.updated-badge.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
 </head>
 <body>
 
-    <button id="send-btn">Отправить данные в бот</button>
+<!-- HEADER -->
+<div class="header">
+    <h1>📊 СТАТИСТИКА БОТА</h1>
+    <div class="subtitle">
+        <span class="live-dot"></span>
+        LIVE • обновлено <span id="updatedTime">сейчас</span>
+    </div>
+</div>
 
-    <script>
-        // Инициализируем объект WebApp
-        const tg = window.Telegram.WebApp;
-        
-        // Информируем Telegram, что приложение готово к работе
-        tg.ready();
+<!-- LOADING -->
+<div id="loadingScreen" class="loading">
+    <div class="spinner"></div>
+    <div>Загрузка данных...</div>
+</div>
 
-        document.getElementById('send-btn').addEventListener('click', () => {
-            // Данные, которые хотим передать (лучше всего упаковать в строку JSON)
-            const dataToSend = {
-                status: "success",
-                message: "Привет из Mini App!",
-                timestamp: Date.now()
-            };
+<!-- ГЛАВНЫЙ ЭКРАН -->
+<div id="screenMain" class="container screen">
+    <div class="grid-2">
+        <div class="card green-accent">
+            <div class="card-title">👥 Всего игроков</div>
+            <div class="card-value green" id="totalUsers">—</div>
+            <div class="card-sub">В базе бота</div>
+        </div>
+        <div class="card yellow-accent">
+            <div class="card-title">🟢 Онлайн</div>
+            <div class="card-value yellow" id="onlineNow">—</div>
+            <div class="card-sub">за 5 минут</div>
+        </div>
+    </div>
 
-            // Важно: метод работает только если Mini App открыт по кнопке KeyboardButton!
-            tg.sendData(JSON.stringify(dataToSend));
-        });
-    </script>
+    <div class="grid-3">
+        <div class="mini-card">
+            <div class="mini-value" id="online1h">—</div>
+            <div class="mini-label">Онлайн 1ч</div>
+        </div>
+        <div class="mini-card">
+            <div class="mini-value" id="online24h">—</div>
+            <div class="mini-label">Онлайн 24ч</div>
+        </div>
+        <div class="mini-card">
+            <div class="mini-value" id="newToday">—</div>
+            <div class="mini-label">Новых сегодня</div>
+        </div>
+    </div>
+
+    <div class="card purple-accent">
+        <div class="card-title">💰 Валюты в системе</div>
+        <div class="grid-2" style="margin: 0;">
+            <div>
+                <div class="card-value blue" id="totalBalance" style="font-size:18px;">—</div>
+                <div class="card-sub">💵 Деньги</div>
+            </div>
+            <div>
+                <div class="card-value purple" id="totalGcoins" style="font-size:18px;">—</div>
+                <div class="card-sub">💎 GC</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⚡ Активность (24ч)</div>
+        <div class="bar-row">
+            <div class="bar-label">Команд</div>
+            <div class="bar-container"><div class="bar-fill" id="barCommands"></div></div>
+            <div class="bar-value" id="commandsValue">—</div>
+        </div>
+    </div>
+</div>
+
+<!-- ИГРЫ -->
+<div id="screenGames" class="container screen">
+    <div class="card pink-accent">
+        <div class="card-title">🎮 Игры за 24 часа</div>
+        <div id="gamesList"></div>
+    </div>
+</div>
+
+<!-- ТОП -->
+<div id="screenTop" class="container screen">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTopTab('balance', this)">💰 По деньгам</div>
+        <div class="tab" onclick="switchTopTab('gcoins', this)">💎 По GC</div>
+        <div class="tab" onclick="switchTopTab('commands', this)">⚡ По командам</div>
+    </div>
+    <div class="card yellow-accent">
+        <div class="card-title" id="topTitle">🏆 Топ игроков</div>
+        <div id="topList"></div>
+    </div>
+</div>
+
+<!-- ОНЛАЙН -->
+<div id="screenOnline" class="container screen">
+    <div class="card green-accent">
+        <div class="card-title">🟢 Сейчас онлайн</div>
+        <div id="onlineList"></div>
+    </div>
+</div>
+
+<!-- ИСТОРИЯ -->
+<div id="screenHistory" class="container screen">
+    <div class="card purple-accent">
+        <div class="card-title">📉 История за 14 дней</div>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<!-- НИЖНЕЕ МЕНЮ -->
+<div class="bottom-menu">
+    <button class="menu-btn active" onclick="switchScreen('main', this)">
+        <div class="menu-icon">📊</div>
+        <div>Общая</div>
+    </button>
+    <button class="menu-btn" onclick="switchScreen('games', this)">
+        <div class="menu-icon">🎮</div>
+        <div>Игры</div>
+    </button>
+    <button class="menu-btn" onclick="switchScreen('top', this)">
+        <div class="menu-icon">🏆</div>
+        <div>Топ</div>
+    </button>
+    <button class="menu-btn" onclick="switchScreen('online', this)">
+        <div class="menu-icon">🟢</div>
+        <div>Онлайн</div>
+    </button>
+    <button class="menu-btn" onclick="switchScreen('history', this)">
+        <div class="menu-icon">📉</div>
+        <div>История</div>
+    </button>
+</div>
+
+<!-- BADGE -->
+<div class="updated-badge" id="updatedBadge">✅ Обновлено</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+let STATS = null;
+let currentTopTab = 'balance';
+
+// ─── Чтение данных из URL ───
+function readData() {
+    let raw = null;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+        raw = tg.initDataUnsafe.start_param;
+    }
+    if (!raw) {
+        const params = new URLSearchParams(window.location.search);
+        raw = params.get("data") || params.get("start");
+    }
+    if (!raw) return null;
+    try {
+        return JSON.parse(decodeURIComponent(raw));
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+// ─── Форматирование ───
+function fmt(n) {
+    if (n === null || n === undefined) return "—";
+    return Number(n).toLocaleString("ru-RU").replace(/,/g, " ");
+}
+
+// ─── Рендер общей ───
+function renderMain() {
+    const g = STATS.general || {};
+
+    document.getElementById("totalUsers").textContent = fmt(g.total);
+    document.getElementById("onlineNow").textContent = fmt(g.online_5m);
+    document.getElementById("online1h").textContent = fmt(g.online_1h);
+    document.getElementById("online24h").textContent = fmt(g.online_24h);
+    document.getElementById("newToday").textContent = fmt(g.new_today);
+    document.getElementById("totalBalance").textContent = fmt(g.total_balance) + " $";
+    document.getElementById("totalGcoins").textContent = fmt(g.total_gcoins) + " G";
+    document.getElementById("commandsValue").textContent = fmt(g.commands_24h);
+
+    // Прогресс-бар команд (относительно 1000)
+    const maxCmd = Math.max(g.commands_24h || 0, 1000);
+    const width = Math.min((g.commands_24h / maxCmd) * 100, 100);
+    document.getElementById("barCommands").style.width = width + "%";
+}
+
+// ─── Рендер игр ───
+function renderGames() {
+    const games = STATS.games || {};
+    const sorted = Object.entries(games).sort((a, b) => b[1] - a[1]);
+    const total = sorted.reduce((s, [_, v]) => s + v, 0) || 1;
+    const maxVal = sorted[0]?.[1] || 1;
+
+    const container = document.getElementById("gamesList");
+    container.innerHTML = "";
+
+    if (sorted.length === 0 || total === 0) {
+        container.innerHTML = "<div style='color:#6b7280;text-align:center;padding:20px;'>Пока нет данных</div>";
+        return;
+    }
+
+    sorted.forEach(([name, count]) => {
+        if (count === 0) return;
+        const percent = ((count / total) * 100).toFixed(1);
+        const width = Math.min((count / maxVal) * 100, 100);
+
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+            <div class="bar-label">${name}</div>
+            <div class="bar-container"><div class="bar-fill" style="width:${width}%"></div></div>
+            <div class="bar-value">${count} <span style="color:#6b7280;font-size:10px;">(${percent}%)</span></div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// ─── Рендер топ ───
+function renderTop() {
+    let list = [];
+    let title = "";
+
+    if (currentTopTab === 'balance') {
+        list = STATS.top_balance || [];
+        title = "💰 Топ по деньгам";
+    } else if (currentTopTab === 'gcoins') {
+        list = STATS.top_gcoins || [];
+        title = "💎 Топ по GC";
+    } else {
+        list = STATS.top_commands || [];
+        title = "⚡ Топ по командам (24ч)";
+    }
+
+    document.getElementById("topTitle").textContent = "🏆 " + title;
+
+    const container = document.getElementById("topList");
+    container.innerHTML = "";
+
+    if (list.length === 0) {
+        container.innerHTML = "<div style='color:#6b7280;text-align:center;padding:20px;'>Пока нет данных</div>";
+        return;
+    }
+
+    list.forEach((item, idx) => {
+        const rank = idx + 1;
+        let rankClass = "";
+        let rankIcon = rank + ".";
+        if (rank === 1) { rankClass = "gold"; rankIcon = "🥇"; }
+        else if (rank === 2) { rankClass = "silver"; rankIcon = "🥈"; }
+        else if (rank === 3) { rankClass = "bronze"; rankIcon = "🥉"; }
+
+        const name = item.username ? "@" + item.username : "ID " + item.user_id;
+        let value = "";
+        if (currentTopTab === 'balance') value = fmt(item.balance) + " $";
+        else if (currentTopTab === 'gcoins') value = fmt(item.gcoins) + " G";
+        else value = fmt(item.count) + " команд";
+
+        const row = document.createElement("div");
+        row.className = "top-item";
+        row.innerHTML = `
+            <div class="top-rank ${rankClass}">${rankIcon}</div>
+            <div class="top-name">${name}</div>
+            <div class="top-value">${value}</div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// ─── Рендер онлайн ───
+function renderOnline() {
+    const list = STATS.online_list || [];
+    const container = document.getElementById("onlineList");
+    container.innerHTML = "";
+
+    if (list.length === 0) {
+        container.innerHTML = "<div style='color:#6b7280;text-align:center;padding:20px;'>Никого нет онлайн</div>";
+        return;
+    }
+
+    list.forEach(u => {
+        const name = u.username ? "@" + u.username : "ID " + u.user_id;
+        const row = document.createElement("div");
+        row.className = "live-item";
+        row.innerHTML = `
+            <span class="live-name">${name}</span>
+            <span class="live-cmd">/${u.last_command || '—'}</span>
+            <span class="live-time">${u.time_ago}</span>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// ─── Рендер истории ───
+function renderHistory() {
+    const history = STATS.history || [];
+    const container = document.getElementById("historyList");
+    container.innerHTML = "";
+
+    if (history.length === 0) {
+        container.innerHTML = "<div style='color:#6b7280;text-align:center;padding:20px;'>Пока нет данных</div>";
+        return;
+    }
+
+    const maxUsers = Math.max(...history.map(h => h.total_users), 1);
+
+    history.forEach(h => {
+        const width = Math.min((h.total_users / maxUsers) * 100, 100);
+        const row = document.createElement("div");
+        row.style.marginBottom = "14px";
+        row.innerHTML = `
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                <span style="color:#a78bfa;font-weight:700;">📅 ${h.date}</span>
+                <span style="color:#22c55e;font-weight:700;">+${h.new_users} новых</span>
+            </div>
+            <div class="bar-container" style="height:6px;">
+                <div class="bar-fill" style="width:${width}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-top:4px;">
+                <span>👥 ${fmt(h.total_users)}</span>
+                <span>🟢 ${fmt(h.active_users)}</span>
+                <span>⚡ ${fmt(h.commands_used)}</span>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+}
+
+// ─── Переключение экранов ───
+function switchScreen(name, btn) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".menu-btn").forEach(b => b.classList.remove("active"));
+
+    const screenId = "screen" + name.charAt(0).toUpperCase() + name.slice(1);
+    document.getElementById(screenId).classList.add("active");
+    if (btn) btn.classList.add("active");
+
+    if (name === 'main') renderMain();
+    if (name === 'games') renderGames();
+    if (name === 'top') renderTop();
+    if (name === 'online') renderOnline();
+    if (name === 'history') renderHistory();
+}
+
+function switchTopTab(tab, el) {
+    currentTopTab = tab;
+    document.querySelectorAll(".tabs .tab").forEach(t => t.classList.remove("active"));
+    el.classList.add("active");
+    renderTop();
+}
+
+// ─── Обновление времени ───
+function updateTime() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById("updatedTime").textContent = hh + ":" + mm;
+}
+
+function showBadge() {
+    const b = document.getElementById("updatedBadge");
+    b.classList.add("show");
+    setTimeout(() => b.classList.remove("show"), 2000);
+}
+
+// ─── ЗАГРУЗКА ───
+window.addEventListener("load", () => {
+    STATS = readData();
+
+    if (!STATS) {
+        document.getElementById("loadingScreen").innerHTML =
+            "<div style='color:#ef4444;'>❌ Ошибка: данных нет. Открой через команду в боте.</div>";
+        return;
+    }
+
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("screenMain").classList.add("active");
+
+    updateTime();
+    renderMain();
+
+    // Авто-обновление времени
+    setInterval(updateTime, 30000);
+});
+
+// Обновление через кнопку WebApp
+window.addEventListener("message", (event) => {
+    try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data.type === "update") {
+            STATS = data.stats;
+            renderMain();
+            showBadge();
+        }
+    } catch (e) { console.error(e); }
+});
+</script>
 </body>
 </html>
